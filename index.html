@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Awesome Mini App</title>
+    <!-- We'll use Tailwind CSS for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Telegram Web App script is required for full integration -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* A little extra styling for a nice feel */
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--tg-theme-text-color, #222);
+            background-color: var(--tg-theme-bg-color, #fff);
+        }
+        .btn-primary {
+            background-color: var(--tg-theme-button-color, #007bff);
+            color: var(--tg-theme-button-text-color, #fff);
+            transition: transform 0.1s ease-in-out;
+        }
+        .btn-primary:active {
+            transform: scale(0.95);
+        }
+    </style>
+
+    <!-- 
+      STEP 1: YOUR PERSONAL MONETAG SDK SCRIPT
+      This script is now configured with your Zone ID. It will load the necessary
+      code and create a global function named 'show_2975602' to trigger your ads.
+    -->
+    <script async src="https://syndication.exdynsrv.com/inst.js" data-zone="2975602" data-sdk="show_2975602"></script> 
+
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
+
+    <div class="w-full max-w-sm text-center bg-white p-8 rounded-2xl shadow-lg">
+        <h1 id="welcome-message" class="text-2xl font-bold mb-2">Welcome!</h1>
+        <p class="text-gray-600 mb-6">This is your awesome Mini App. Click the button below to get a reward!</p>
+
+        <!-- The button that triggers the ad -->
+        <button id="reward-button" class="btn-primary w-full py-3 px-4 rounded-xl font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+            Watch Ad for 100 Coins!
+        </button>
+
+        <!-- A message area to show results -->
+        <div id="status-message" class="mt-6 text-lg font-medium text-green-500"></div>
+
+    </div>
+
+    <script>
+        // STEP 2: INITIALIZE THE TELEGRAM WEB APP
+        const tg = window.Telegram.WebApp;
+        tg.ready(); // Let Telegram know the app is ready
+
+        // Personalize the welcome message if user info is available
+        const welcomeMessage = document.getElementById('welcome-message');
+        if (tg.initDataUnsafe?.user?.first_name) {
+            welcomeMessage.innerText = `Welcome, ${tg.initDataUnsafe.user.first_name}!`;
+        }
+
+        // STEP 3: ADD THE JAVASCRIPT LOGIC TO TRIGGER YOUR AD
+        const rewardButton = document.getElementById('reward-button');
+        const statusMessage = document.getElementById('status-message');
+
+        rewardButton.addEventListener('click', () => {
+            console.log("Reward button clicked! Calling Monetag...");
+            statusMessage.innerText = "Loading ad...";
+            rewardButton.disabled = true;
+            rewardButton.innerText = "Loading...";
+
+            // This now calls the specific function for your Zone ID.
+            show_2975602({ type: 'end' })
+                .then((result) => {
+                    console.log("Ad promise resolved:", result);
+                    // Monetag's SDK returns a promise. When the ad is closed, the promise resolves.
+                    // Check if the user actually earned the reward.
+                    if (result.reward_event_type === 'valued') {
+                        statusMessage.innerText = "🎉 You earned 100 coins! 🎉";
+                        // Here you would add the logic to actually give the user coins in your app
+                    } else {
+                        statusMessage.innerText = "Ad closed without reward.";
+                    }
+                })
+                .catch((error) => {
+                    // Always have a .catch() block to handle cases where ads aren't available.
+                    console.error("Ad failed to show:", error);
+                    statusMessage.innerText = "Sorry, no ads available right now. Try again later!";
+                    // Optionally, show a native Telegram alert
+                    tg.showAlert("Sorry, no ads available right now. Please try again later!");
+                })
+                .finally(() => {
+                    // Re-enable the button after the ad flow is complete
+                    rewardButton.disabled = false;
+                    rewardButton.innerText = "Watch Ad for 100 Coins!";
+                });
+        });
+
+    </script>
+
+</body>
+</html>
